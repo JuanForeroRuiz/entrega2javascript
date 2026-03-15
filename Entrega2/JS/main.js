@@ -1,102 +1,83 @@
 // DEFINIMOS EL NOMBRE DEL USUARIO
-let nombrePersona = prompt("Ingresa tu nombre:") || "Invitado";
+let usuarioActual = prompt("Ingresa tu nombre:") || "INVITADO";
 
-document.getElementById("nombreIngresado").innerText = ` ${nombrePersona.toUpperCase()}`;
+document.getElementById("displayUsuario").innerText = ` ${usuarioActual.toUpperCase()}`;
 
 // CLAVE PARA LOCALSTORAGE
-const STORAGE_KEY = "productos";
+const CLAVE_DB = "productos";
 
-// ARRAY PRINCIPAL
-let productos = [];
+//ARRAY PRINCIPAL
+let items = [];
 
 // --- FUNCIONES ---
-
-function cargarProductos() {
-    let datosGuardados = localStorage.getItem(STORAGE_KEY);
-    if (datosGuardados) {
-        productos = JSON.parse(datosGuardados);
+function recuperarDatos() {
+    let archivo = localStorage.getItem(CLAVE_DB);
+    if (archivo) {
+        items = JSON.parse(archivo);
     }
 }
 
-function guardarProductos() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(productos));
+function persistirDatos() {
+    localStorage.setItem(CLAVE_DB, JSON.stringify(items));
 }
 
-function mostrarProductos() {
-    let lista = document.getElementById("listaProductos");
-    lista.innerHTML = "";
+function refrescarVista() {
+    let panelLista = document.getElementById("contenedorInventario");
+    panelLista.innerHTML = "";
 
-    
-    productos.forEach(function(producto) {
-        let li = document.createElement("li");
-        li.className = "mb-3";
-        li.innerHTML = `
-            ${producto.nombre.toUpperCase()} - $${producto.precio}
-            <button onclick="eliminarProducto('${producto.id}')" class="btn btn-danger ms-4">Eliminar</button>
+    items.forEach(function(item) {
+        let fila = document.createElement("li");
+        fila.className = "mb-3";
+        fila.innerHTML = `
+            ${item.nombre.toUpperCase()} - $${item.valor}
+            <button onclick="borrarItem('${item.codigo}')" class="btn btn-danger ms-4">Eliminar</button>
         `;
-        lista.appendChild(li);
+        panelLista.appendChild(fila);
     });
 
-    calcularTotal();
+    sumarTotal();
 }
 
-function agregarProducto() {
-    let nombreInput = document.getElementById("nombreProducto");
-    let precioInput = document.getElementById("precioProducto");
+function registrarItem() {
+    let campoNombre = document.getElementById("inputArticulo");
+    let campoValor = document.getElementById("inputValor");
 
-    let nombreMayusculas = nombreInput.value.toUpperCase();
-
-   
-    let nuevoProducto = {
-        id: Date.now(), 
-        nombre: nombreInput.value.toUpperCase(),
-        precio: parseFloat(precioInput.value)
+    let nuevoItem = {
+        codigo: Date.now(), 
+        nombre: campoNombre.value,
+        valor: parseFloat(campoValor.value)
     };
 
-    productos.push(nuevoProducto);
-    guardarProductos();
-    mostrarProductos();
+    items.push(nuevoItem);
+    persistirDatos();
+    refrescarVista();
 
-   
-    nombreInput.value = "";
-    precioInput.value = "";
+    campoNombre.value = "";
+    campoValor.value = "";
 }
 
-function eliminarProducto(id) {
-    
-    productos = productos.filter(function(producto) {
-        return producto.id != id;
+function borrarItem(id) {
+    items = items.filter(function(elemento) {
+        return elemento.codigo != id;
     });
-
-    guardarProductos();
-    mostrarProductos();
+    persistirDatos();
+    refrescarVista();
 }
 
-function ordenarPorPrecio() {
-    
-    productos.sort(function(a, b) {
-        
-        let precioA = parseFloat(a.precio);
-        let precioB = parseFloat(b.precio);
-        
-        
-        return precioA - precioB;
+function organizarPorCosto() {
+    items.sort(function(a, b) {
+        return a.valor - b.valor;
     });
-
-    
-    guardarProductos();
-    mostrarProductos();
+    persistirDatos();
+    refrescarVista();
 }
 
-function calcularTotal() {
-    let total = 0;
-    
-    productos.forEach(function(producto) {
-        total += producto.precio;
+function sumarTotal() {
+    let acumulado = 0;
+    items.forEach(function(item) {
+        acumulado += item.valor;
     });
-    
-    document.getElementById("totalCarrito").innerText = total;
+    document.getElementById("displayTotal").innerText = acumulado;
 }
 
-
-document.getElementById("agregarProducto").addEventListener("click", agregarProducto);
+document.getElementById("btnRegistrar").addEventListener("click", registrarItem);
